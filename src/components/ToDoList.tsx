@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { Container, Typography, Checkbox, Button, Stack } from "@mui/material";
+import {
+  Typography,
+  Checkbox,
+  Button,
+  Stack,
+  FormControlLabel,
+  Card,
+  Fade,
+} from "@mui/material";
 
 type Task = {
   name: string;
@@ -26,11 +34,7 @@ export const ToDoList = () => {
       ? +localStorage.getItem("currentPhase")!
       : 0
   );
-  const [completedPhases, setCompletedPhases] = useState<string>(
-    localStorage.getItem("completedPhases")
-      ? localStorage.getItem("completedPhases")!
-      : ""
-  );
+
   const [tasks, setTasks] = useState<Task[]>(
     localStorage.getItem("tasks")
       ? JSON.parse(localStorage.getItem("tasks")!)
@@ -38,33 +42,17 @@ export const ToDoList = () => {
   );
 
   useEffect(() => {
-    // Load saved phase and tasks from local storage
-    const savedCurrentPhase = localStorage.getItem("currentPhase");
-    const savedCompletedPhases = localStorage.getItem("completedPhases");
-    const savedTasks = localStorage.getItem("tasks");
-
-    if (savedCurrentPhase && savedTasks && savedCompletedPhases) {
-      setCurrentPhase(Number(savedCurrentPhase));
-      setTasks(JSON.parse(savedTasks));
-      setCompletedPhases(savedCompletedPhases);
-    }
-  }, []);
-
-  useEffect(() => {
     // Save current phase and tasks to local storage
     localStorage.setItem("currentPhase", currentPhase.toString());
     localStorage.setItem("tasks", JSON.stringify(tasks));
-  }, [completedPhases, currentPhase, tasks]);
+  }, [currentPhase, tasks]);
 
   useEffect(() => {
-    // Check if all tasks in the current phase are completed
     if (
       tasks.every((task) => task.completed) &&
       currentPhase < phases.length - 1
     ) {
-      // Increment phase when all tasks are completed and there is a next phase
       setCurrentPhase(currentPhase + 1);
-      setCompletedPhases(currentPhase.toString());
 
       // Merge tasks from both the current and next phases
       setTasks((prevTasks) => [
@@ -116,44 +104,81 @@ export const ToDoList = () => {
   };
 
   return (
-    <Container>
+    <Stack alignItems='center' spacing={2} sx={{ m: 5 }}>
       <Typography variant='h4'>Startup Progress</Typography>
-      {phases.map((phaseTasks, phaseIndex) => (
-        <Stack key={phaseIndex}>
-          <Typography variant='h5'>Phase {phaseIndex + 1}</Typography>
-          {phaseIndex <= currentPhase && (
-            <Stack>
-              {phaseTasks.map((task, taskIndex) => (
-                <Stack key={taskIndex}>
-                  <Stack direction='row' spacing={2} alignItems='center'>
-                    <Checkbox
-                      checked={tasks.some(
-                        (t) => t.name === task.name && t.completed
-                      )}
-                      onChange={() => handleTaskChange(taskIndex, phaseIndex)}
-                      disabled={currentPhase !== 0 && currentPhase > phaseIndex}
-                    />
-                    <Typography variant='subtitle2'>{task.name}</Typography>
+      <Card
+        variant='outlined'
+        sx={{
+          backgroundColor: (theme) => theme.palette.secondary.light,
+          borderRadius: "50px",
+          borderWidth: "2px",
+          borderColor: (theme) => theme.palette.primary.main,
+          width: "100%",
+          color: (theme) => theme.palette.primary.light,
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Stack
+          alignItems='start'
+          justifyContent='center'
+          sx={{ m: 5 }}
+          spacing={3}
+        >
+          {phases.map((phaseTasks, phaseIndex) => (
+            <Stack key={phaseIndex}>
+              <Typography variant='h5'>Phase {phaseIndex + 1}</Typography>
+              {phaseIndex <= currentPhase && (
+                <Fade in timeout={600}>
+                  <Stack>
+                    {phaseTasks.map((task, taskIndex) => (
+                      <Stack key={taskIndex}>
+                        <Stack direction='row' spacing={2} alignItems='center'>
+                          <FormControlLabel
+                            label={task.name}
+                            control={
+                              <Checkbox
+                                checked={tasks.some(
+                                  (t) => t.name === task.name && t.completed
+                                )}
+                                onChange={() =>
+                                  handleTaskChange(taskIndex, phaseIndex)
+                                }
+                                disabled={
+                                  currentPhase !== 0 &&
+                                  currentPhase > phaseIndex
+                                }
+                              />
+                            }
+                          />
+                        </Stack>
+                        {phaseTasks.filter((task) => task.completed).length ===
+                          phaseTasks.length &&
+                          taskIndex === phaseTasks.length - 1 &&
+                          phaseIndex !== phases.length - 1 && (
+                            <Button
+                              variant='outlined'
+                              onClick={() =>
+                                reopenPhase(
+                                  taskIndex,
+                                  phaseIndex,
+                                  phaseTasks.length
+                                )
+                              }
+                              sx={{ width: 300, borderRadius: 4 }}
+                            >
+                              Reopen
+                            </Button>
+                          )}
+                      </Stack>
+                    ))}
                   </Stack>
-                  {phaseTasks.filter((task) => task.completed).length ===
-                    phaseTasks.length &&
-                    taskIndex === phaseTasks.length - 1 &&
-                    phaseIndex !== phases.length - 1 && (
-                      <Button
-                        variant='outlined'
-                        onClick={() =>
-                          reopenPhase(taskIndex, phaseIndex, phaseTasks.length)
-                        }
-                      >
-                        Reopen
-                      </Button>
-                    )}
-                </Stack>
-              ))}
+                </Fade>
+              )}
             </Stack>
-          )}
+          ))}
         </Stack>
-      ))}
-    </Container>
+      </Card>
+    </Stack>
   );
 };
