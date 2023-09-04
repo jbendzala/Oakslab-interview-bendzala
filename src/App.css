@@ -1,0 +1,14 @@
+html,
+body {
+  height: 100vh;
+  background-color: #fcf9f7;
+}
+
+.bg {
+  background-color: #fcf9f7;
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  overflow-x: auto;
+  overflow-y: auto;
+}
